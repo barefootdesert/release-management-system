@@ -1,0 +1,29 @@
+# Виртуальное окружение
+.venv/
+venv/
+env/
+
+# Кэш Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Распространение / упаковка
+*.egg-info/
+dist/
+build/
+
+# Окружение и секреты
+.env
+.env.local
+
+# IDE и редакторы
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Служебные файлы ОС
+.DS_Store
+Thumbs.db
