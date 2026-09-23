@@ -8,6 +8,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.pyo
+.pytest_cache/
+
+# Служебные файлы документов
+.~lock.*
 
 # Распространение / упаковка
 *.egg-info/

@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "title": "Исправить таймаут оплаты",
+    "developer_id": 1,
+    "product_id": 1,
+    "release_id": 1,
+    "status": "done"
+  },
+  {
+    "id": 2,
+    "title": "Проверить сценарий публикации 2.1.0",
+    "developer_id": 2,
+    "product_id": 1,
+    "release_id": 1,
+    "status": "in_progress"
+  },
+  {
+    "id": 3,
+    "title": "Обновить экран профиля",
+    "developer_id": 3,
+    "product_id": 2,
+    "release_id": 2,
+    "status": "todo"
+  }
+]
