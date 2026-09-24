@@ -1,7 +1,14 @@
-"""Загрузка и сохранение данных проекта в JSON-файлах."""
+"""Загрузка и сохранение объектов предметной области в JSON."""
+
+from __future__ import annotations
 
 import json
 from pathlib import Path
+
+from models import Developer, Product, Release, Task
+from models.developers import get_developer
+from models.products import get_product
+from models.releases import find_release
 
 DATA_DIR = Path("data")
 PRODUCTS_FILE = DATA_DIR / "products.json"
@@ -29,65 +36,91 @@ def _save_json(path: Path, payload) -> None:
         json.dump(payload, file, ensure_ascii=False, indent=2)
 
 
-def _load_indexed(path: Path) -> dict[int, dict]:
-    """Загрузить список словарей в словарь по полю id."""
-    raw = _load_json(path, [])
-    items: dict[int, dict] = {}
-    for item in raw:
-        items[int(item["id"])] = item
-    return items
-
-
-def _save_indexed(path: Path, items: dict[int, dict]) -> None:
-    """Сохранить словарь записей списком, упорядоченным по id."""
-    payload = [items[key] for key in sorted(items)]
-    _save_json(path, payload)
-
-
-def load_products(filename: Path = PRODUCTS_FILE) -> dict[int, dict]:
-    """Загрузить продукты из JSON-файла в словарь по id."""
-    return _load_indexed(filename)
+def load_products(filename: Path = PRODUCTS_FILE) -> list[Product]:
+    """Загрузить продукты из JSON и создать объекты Product."""
+    raw = _load_json(filename, [])
+    products: list[Product] = []
+    for data in raw:
+        products.append(Product.from_data(data))
+    return products
 
 
 def save_products(
-    products: dict[int, dict],
+    products: list[Product],
     filename: Path = PRODUCTS_FILE,
 ) -> None:
-    """Сохранить продукты в JSON-файл."""
-    _save_indexed(filename, products)
+    """Сохранить объекты Product в JSON."""
+    payload = [item.to_data() for item in sorted(products, key=lambda p: p.id)]
+    _save_json(filename, payload)
 
 
-def load_releases(filename: Path = RELEASES_FILE) -> list[dict]:
-    """Загрузить релизы из JSON-файла."""
-    return list(_load_json(filename, []))
-
-
-def save_releases(
-    releases: list[dict],
-    filename: Path = RELEASES_FILE,
-) -> None:
-    """Сохранить релизы в JSON-файл."""
-    _save_json(filename, releases)
-
-
-def load_developers(filename: Path = DEVELOPERS_FILE) -> dict[int, dict]:
-    """Загрузить разработчиков из JSON-файла."""
-    return _load_indexed(filename)
+def load_developers(filename: Path = DEVELOPERS_FILE) -> list[Developer]:
+    """Загрузить разработчиков из JSON и создать объекты Developer."""
+    raw = _load_json(filename, [])
+    developers: list[Developer] = []
+    for data in raw:
+        developers.append(Developer.from_data(data))
+    return developers
 
 
 def save_developers(
-    developers: dict[int, dict],
+    developers: list[Developer],
     filename: Path = DEVELOPERS_FILE,
 ) -> None:
-    """Сохранить разработчиков в JSON-файл."""
-    _save_indexed(filename, developers)
+    """Сохранить объекты Developer в JSON."""
+    payload = [
+        item.to_data() for item in sorted(developers, key=lambda d: d.id)
+    ]
+    _save_json(filename, payload)
 
 
-def load_tasks(filename: Path = TASKS_FILE) -> list[dict]:
-    """Загрузить задачи из JSON-файла."""
-    return list(_load_json(filename, []))
+def load_releases(
+    products: list[Product],
+    filename: Path = RELEASES_FILE,
+) -> list[Release]:
+    """Загрузить релизы и восстановить ссылки на объекты Product."""
+    raw = _load_json(filename, [])
+    releases: list[Release] = []
+    for data in raw:
+        product = get_product(products, int(data["product_id"]))
+        if product is None:
+            continue
+        releases.append(Release.from_data(data, product))
+    return releases
 
 
-def save_tasks(tasks: list[dict], filename: Path = TASKS_FILE) -> None:
-    """Сохранить задачи в JSON-файл."""
-    _save_json(filename, tasks)
+def save_releases(
+    releases: list[Release],
+    filename: Path = RELEASES_FILE,
+) -> None:
+    """Сохранить объекты Release; продукт записывается как product_id."""
+    payload = [item.to_data() for item in sorted(releases, key=lambda r: r.id)]
+    _save_json(filename, payload)
+
+
+def load_tasks(
+    products: list[Product],
+    developers: list[Developer],
+    releases: list[Release],
+    filename: Path = TASKS_FILE,
+) -> list[Task]:
+    """Загрузить задачи и восстановить ссылки на связанные объекты."""
+    raw = _load_json(filename, [])
+    tasks: list[Task] = []
+    for data in raw:
+        developer = get_developer(developers, int(data["developer_id"]))
+        product = get_product(products, int(data["product_id"]))
+        if developer is None or product is None:
+            continue
+        release_id = data.get("release_id")
+        release = None
+        if release_id is not None:
+            release = find_release(releases, int(release_id))
+        tasks.append(Task.from_data(data, developer, product, release))
+    return tasks
+
+
+def save_tasks(tasks: list[Task], filename: Path = TASKS_FILE) -> None:
+    """Сохранить объекты Task; связи записываются идентификаторами."""
+    payload = [item.to_data() for item in sorted(tasks, key=lambda t: t.id)]
+    _save_json(filename, payload)

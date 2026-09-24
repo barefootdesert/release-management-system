@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from releases import ENVIRONMENTS
+from models.releases import ENVIRONMENTS
 
 
 def input_int(prompt: str) -> int:
