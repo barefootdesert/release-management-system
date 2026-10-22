@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Статистика релизов{% endblock %}
+
+{% block content %}
+<h1>Статистика релизов</h1>
+<p class="lead">
+  Активных релизов всего:
+  <strong>{{ total_active }}</strong>
+</p>
+
+<div class="list-group">
+  {% for item in statistics %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+      <div>
+        <a href="{% url 'products:product_detail' item.id %}">
+          {{ item.name }}
+        </a>
+      </div>
+      <span class="badge bg-primary rounded-pill">
+        {{ item.releases_count }}
+      </span>
+    </div>
+  {% empty %}
+    <div class="list-group-item">Данные отсутствуют.</div>
+  {% endfor %}
+</div>
+{% endblock %}

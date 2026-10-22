@@ -268,6 +268,14 @@ def find_release(
     return None
 
 
+def find_release_by_id(
+    releases: list[Release],
+    release_id: int,
+) -> Release | None:
+    """Найти релиз по идентификатору (для веб-страниц ПР5)."""
+    return find_release(releases, release_id)
+
+
 def find_releases_by_version(
     releases: list[Release],
     query: str,

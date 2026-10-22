@@ -1,0 +1,53 @@
+:root {
+  --ink: #1d1a16;
+  --accent: #0f5c4c;
+  --line: #ddd4c6;
+  --panel: #fffdf8;
+}
+
+body {
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, #efe6d6 0%, transparent 40%),
+    linear-gradient(160deg, #f7f3eb, #e8e1d4);
+  min-height: 100vh;
+}
+
+.release-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+
+.product-card {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgba(40, 30, 10, 0.06);
+}
+
+.release-status {
+  font-weight: 600;
+}
+
+.release-status-cancelled {
+  background-color: #6c757d !important;
+}
+
+.release-status-published {
+  background-color: #0d6efd !important;
+}
+
+.release-status-ready {
+  background-color: var(--accent) !important;
+}
+
+.release-status-wait {
+  background-color: #e0a800 !important;
+  color: #1d1a16 !important;
+}
+
+.site-footer {
+  background: rgba(255, 253, 248, 0.8);
+}

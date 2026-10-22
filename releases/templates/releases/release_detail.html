@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if release %}Релиз №{{ release.id }}{% else %}Релиз не найден{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if release %}
+  <div class="card product-card">
+    <div class="card-body">
+      <h5 class="card-title">
+        Релиз №{{ release.id }}:
+        {{ release.product.name }} {{ release.version }}
+      </h5>
+      <p class="card-text">
+        <strong>Продукт:</strong>
+        <a href="{% url 'products:product_detail' release.product.id %}">
+          {{ release.product.name }}
+        </a>
+      </p>
+      <p class="card-text">
+        <strong>Окружение:</strong> {{ release.environment }}
+      </p>
+      <p class="card-text">
+        <strong>Дата:</strong> {{ release.release_date|date:"d.m.Y" }}
+        ({{ release.describe_deadline }})
+      </p>
+      <p class="card-text">
+        <strong>Тесты пройдены:</strong>
+        {% if release.tests_passed %}да{% else %}нет{% endif %}
+      </p>
+      <p class="card-text">
+        <strong>Согласования:</strong>
+        {{ release.approvals_count }} / {{ release.required_approvals }}
+      </p>
+      <p class="card-text">
+        <strong>Hotfix:</strong>
+        {% if release.is_hotfix %}да{% else %}нет{% endif %}
+      </p>
+      <p class="card-text">
+        <strong>Тип версии:</strong> {{ release.classify }}
+      </p>
+      <p class="card-text">
+        Статус:
+        {% include "releases/includes/release_status.html" %}
+      </p>
+      <a href="{% url 'releases:releases' %}"
+         class="btn btn-outline-secondary">
+        ← к списку релизов
+      </a>
+    </div>
+  </div>
+{% else %}
+  <h1 class="text-danger">Релиз не найден</h1>
+  <a href="{% url 'releases:releases' %}"
+     class="btn btn-outline-secondary">
+    ← к списку релизов
+  </a>
+{% endif %}
+{% endblock %}

@@ -60,6 +60,14 @@ def get_product(
     return None
 
 
+def find_product_by_id(
+    products: list[Product],
+    product_id: int,
+) -> Product | None:
+    """Найти продукт по идентификатору (для веб-страниц ПР5)."""
+    return get_product(products, product_id)
+
+
 def sort_products(products: list[Product]) -> list[Product]:
     """Вернуть продукты, упорядоченные по названию."""
     return sorted(products, key=lambda item: item.name.lower())

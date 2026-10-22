@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Система управления релизами{% endblock %}
+
+{% block content %}
+<h1 class="display-4">Система управления релизами</h1>
+<p class="lead">
+  Веб-интерфейс на Django: шаблоны (ПР6) и выборки из SQLite (ПР7).
+</p>
+<p>
+  Классы ПР3 и JSON сохранены. Списки продуктов и релизов, поиск свободных
+  продуктов и статистика получают данные через SQL и модуль
+  <code>sqlite3</code>.
+</p>
+<p>Основные разделы:</p>
+<a href="{% url 'products:products' %}" class="btn btn-primary me-2">
+  Продукты
+</a>
+<a href="{% url 'products:available' %}" class="btn btn-outline-primary me-2">
+  Свободные
+</a>
+<a href="{% url 'releases:releases' %}" class="btn btn-secondary me-2">
+  Релизы
+</a>
+<a href="{% url 'releases:statistics' %}" class="btn btn-outline-secondary">
+  Статистика
+</a>
+{% endblock %}

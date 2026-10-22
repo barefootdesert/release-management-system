@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if product %}{{ product.name }}{% else %}Продукт не найден{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if product %}
+  <div class="card product-card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">{{ product.name|default:"Без названия" }}</h5>
+      <p class="card-text"><strong>ID:</strong> {{ product.id }}</p>
+      <a href="{% url 'products:products' %}"
+         class="btn btn-outline-secondary">
+        ← к списку продуктов
+      </a>
+    </div>
+  </div>
+
+  <h2 class="h4">Релизы продукта</h2>
+  <ul class="list-group">
+    {% for item in related_releases %}
+      <li class="list-group-item d-flex justify-content-between">
+        <a href="{% url 'releases:release_detail' item.id %}">
+          {{ item.version }} ({{ item.environment }})
+        </a>
+        {% include "releases/includes/release_status.html" with release=item %}
+      </li>
+    {% empty %}
+      <li class="list-group-item">Релизов пока нет.</li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <h1 class="text-danger">Продукт не найден</h1>
+  <a href="{% url 'products:products' %}"
+     class="btn btn-outline-secondary">
+    ← к списку продуктов
+  </a>
+{% endif %}
+{% endblock %}

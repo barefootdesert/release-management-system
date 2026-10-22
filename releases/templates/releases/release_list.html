@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Релизы{% endblock %}
+
+{% block content %}
+<h1>Релизы</h1>
+<p class="text-muted">
+  Активные релизы из SQLite.
+  Всего: {{ releases|length }}
+</p>
+<ul class="list-group">
+  {% for release in releases %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <a href="{% url 'releases:release_detail' release.id %}">
+        {{ release.product_name }} – {{ release.version }}
+      </a>
+      <span class="badge bg-secondary">{{ release.status }}</span>
+    </li>
+  {% empty %}
+    <li class="list-group-item">Релизы ещё не добавлены.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

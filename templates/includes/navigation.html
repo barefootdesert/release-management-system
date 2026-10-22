@@ -1,0 +1,12 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'homepage:index' %}">Релизы</a>
+    <div class="navbar-nav">
+      <a class="nav-link" href="{% url 'homepage:index' %}">Главная</a>
+      <a class="nav-link" href="{% url 'products:products' %}">Продукты</a>
+      <a class="nav-link" href="{% url 'products:available' %}">Свободные</a>
+      <a class="nav-link" href="{% url 'releases:releases' %}">Релизы</a>
+      <a class="nav-link" href="{% url 'releases:statistics' %}">Статистика</a>
+    </div>
+  </div>
+</nav>

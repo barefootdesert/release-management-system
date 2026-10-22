@@ -1,0 +1,11 @@
+{% if release.is_cancelled %}
+  <span class="badge release-status release-status-cancelled">отменён</span>
+{% elif release.status == "published" %}
+  <span class="badge release-status release-status-published">опубликован</span>
+{% elif release.can_publish %}
+  <span class="badge release-status release-status-ready">готов к публикации</span>
+{% else %}
+  <span class="badge release-status release-status-wait">
+    {{ release.readiness|default:"ожидает" }}
+  </span>
+{% endif %}
