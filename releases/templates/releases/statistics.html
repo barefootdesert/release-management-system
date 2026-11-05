@@ -8,14 +8,14 @@
   <p>
     Активных релизов:
     <data value="{{ total_active }}">{{ total_active }}</data>
-    · агрегат <code>COUNT(*)</code>
+    · <code>Release.objects.exclude(...).count()</code>
   </p>
 </header>
 
 <form method="get" class="filter-form">
   <label for="min">
     Минимум релизов у продукта
-    <span class="type-chip">HTML number · HAVING COUNT</span>
+    <span class="type-chip">input number · filter(releases_count__gte)</span>
   </label>
   <input
     type="number"
@@ -23,19 +23,22 @@
     name="min"
     min="0"
     step="1"
-    value="{{ min_count }}"
+    value="{{ min_count|default_if_none:'' }}"
     placeholder="0"
   >
   <button type="submit" class="button">Отфильтровать</button>
 </form>
 
 <table class="data-table">
-  <caption>LEFT JOIN + GROUP BY{% if min_count != None %} + HAVING{% endif %}</caption>
+  <caption>
+    <code>Product.objects.annotate(releases_count=Count("releases"))</code>
+  </caption>
   <thead>
     <tr>
-      <th data-sql-type="INTEGER">id</th>
-      <th data-sql-type="TEXT">name</th>
-      <th data-sql-type="INTEGER">COUNT(r.id)</th>
+      <th data-field-type="BigAutoField">id</th>
+      <th data-field-type="CharField">name</th>
+      <th data-field-type="Count">все релизы</th>
+      <th data-field-type="Count(filter=Q)">активные</th>
     </tr>
   </thead>
   <tbody>
@@ -43,26 +46,21 @@
       <tr>
         <td><data value="{{ item.id }}">{{ item.id }}</data></td>
         <td>
-          <a href="{% url 'products:product_detail' item.id %}">
-            {{ item.name }}
-          </a>
+          <a href="{% url 'products:product_detail' item.id %}">{{ item.name }}</a>
         </td>
         <td>
-          <meter
-            min="0"
-            max="{{ max_count }}"
-            value="{{ item.releases_count }}"
-          >
+          <meter min="0" max="{{ max_count }}" value="{{ item.releases_count }}">
             {{ item.releases_count }}
           </meter>
-          <data value="{{ item.releases_count }}">
-            {{ item.releases_count }}
-          </data>
+          <data value="{{ item.releases_count }}">{{ item.releases_count }}</data>
+        </td>
+        <td>
+          <data value="{{ item.active_count }}">{{ item.active_count }}</data>
         </td>
       </tr>
     {% empty %}
       <tr>
-        <td colspan="3">Данные отсутствуют.</td>
+        <td colspan="4">Данные отсутствуют.</td>
       </tr>
     {% endfor %}
   </tbody>

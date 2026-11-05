@@ -1,76 +1,85 @@
 # Система управления релизами
 
-Приложение для учёта продуктов и управления релизами.
+Приложение для учёта продуктов, релизов, команды и задач.
 Консольная объектная модель (ПР3) дополнена веб-интерфейсом на Django
-(ПР5), шаблонами (ПР6) и SQLite (ПР7).
+(ПР5), шаблонами (ПР6), SQLite (ПР7) и Django ORM (ПР9).
 
 ## Используемые технологии
 
-- Python 3;
-- Django 5.2;
+- Python 3, Django 5.2, Django ORM, SQLite;
 - HTML5 / CSS3 / JavaScript / шаблоны Django;
-- SQLite + библиотека `sqlite3`;
-- pytest, flake8.
+- pytest + pytest-django, flake8.
 
-## Страницы веб-интерфейса
+## Структура приложений
 
-- `/` — главная, сводка `COUNT(*)` из SQLite;
-- `/products/` — список продуктов (SELECT + GROUP BY);
-- `/products/<id>/` — карточка продукта;
-- `/products/available/` — продукты без активного релиза на дату;
-- `/releases/` — активные релизы (JOIN);
-- `/releases/<id>/` — карточка релиза (JOIN);
-- `/releases/ready/` — релизы, готовые к публикации;
-- `/releases/statistics/` — статистика (GROUP BY, HAVING).
+| Приложение | Модель | Назначение |
+|---|---|---|
+| `homepage` | — | главная страница, страница 404 |
+| `products` | `Product` | продукты |
+| `developers` | `Developer` | участники команды |
+| `releases` | `Release` | релизы |
+| `tasks` | `Task` | задачи разработчиков |
 
-## HTML и типы SQLite (ПР7)
+Классы ПР3 (`models/`) сохранены: правила публикации
+`can_publish_release`, `get_release_status`, `classify_version`
+используются свойствами модели `Release`.
 
-Поля таблиц выводятся элементами, которые соответствуют типу колонки:
+## Модели и связи (ПР9)
 
-| Тип SQLite | HTML |
-|---|---|
-| INTEGER (id, COUNT) | `<data value="...">` |
-| TEXT (name, version, status) | заголовок, ячейка, `<span>` |
-| TEXT даты YYYY-MM-DD | `<time datetime="...">`, `<input type="date">` |
-| INTEGER 0/1 (tests_passed, is_hotfix) | `<input type="checkbox" disabled>` |
-| INTEGER счётчики согласований | `<meter min max value>` |
-| порог HAVING | `<input type="number">` |
+- `Product`: `name`.
+- `Developer`: `name`, `role`.
+- `Release`: `product` → `Product` (`PROTECT`, `related_name="releases"`),
+  `version`, `environment` (TextChoices test/staging/production),
+  `tests_passed`, `is_hotfix`, `approvals_count`, `required_approvals`,
+  `release_date`, `status`. Уникальная пара `product + version`.
+- `Task`: `developer` → `Developer`, `product` → `Product`,
+  `release` → `Release` (`SET_NULL`, необязательно), `status`.
 
-Тип колонки дублируется атрибутом `data-sql-type` и подписью в шапке таблицы.
+Миграции `0001_initial` всех приложений хранятся в репозитории.
 
-## Шаблоны (ПР6)
+## Перенос данных из базы ПР7
 
-- базовый шаблон `templates/base.html` (`extends` / `block`);
-- навигация `templates/includes/navigation.html` (`{% include %}`, `{% url %}`);
-- карточки и статусы через `{% include %}`;
-- фильтры `|length`, `|default`;
-- статика: `homepage/static/homepage/{css,js,img}`.
-
-## База данных SQLite (ПР7)
-
-Файл: `data/releases.sqlite`.
-
-Таблицы: `products`, `developers`, `releases`, `tasks`
-(первичные и внешние ключи в `sql/schema.sql`).
-
-Импорт из JSON:
+Источник — `data/releases.sqlite` (создаётся из JSON), цель — `db.sqlite3`.
 
 ```bash
-python -m db.import_json
+python -m db.import_json            # JSON → data/releases.sqlite (ПР7)
+python db/inspect_source_db.py      # таблицы, столбцы, число записей
+python manage.py migrate
+python db/import_sqlite_to_orm.py   # SQLite ПР7 → модели Django
 ```
 
-Запросы: `sql/queries.sql`. Подключение: `db/database.py`
-(`PRAGMA foreign_keys = ON`, `sqlite3.Row`).
+Перенос выполняется в `transaction.atomic()` через
+`update_or_create(pk=...)`: идентификаторы и связи сохраняются, повторный
+запуск не создаёт дублей.
 
-Значения в SQL передаются параметрами `?`, без f-строк.
+## Страницы
+
+- `/` — сводка (`count()` по моделям);
+- `/products/` — продукты с числом релизов (`annotate(Count)`);
+- `/products/<id>/` — карточка продукта (`get_object_or_404`);
+- `/products/available/?date=` — продукты без активного релиза на дату
+  (`values_list` + `exclude(pk__in=...)`);
+- `/releases/` — активные релизы: фильтры `date`, `product`, `developer`,
+  `environment`, сортировка `sort` (белый список), пагинация по 5
+  (`Paginator`, `{% querystring %}`);
+- `/releases/<id>/` — карточка релиза и его задачи (`select_related`);
+- `/releases/ready/` — готовые к публикации (`Q`, `F`);
+- `/releases/statistics/` — релизы по продуктам (`annotate`, порог `?min=`).
+
+Поля выводятся HTML-элементами по типу поля модели (подпись
+`data-field-type`): `DateField` → `<time>` / `input type="date"`,
+`BooleanField` → чекбокс, счётчики согласований → `<meter>`,
+`ForeignKey` и choices → `<select>`, идентификаторы → `<data>`.
 
 ## Запуск
 
 ```bash
+python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python manage.py migrate
 python -m db.import_json
+python db/import_sqlite_to_orm.py
 python manage.py runserver
 ```
 
@@ -78,30 +87,18 @@ python manage.py runserver
 
 Консоль (ПР3): `python main.py`
 
-## Тесты
+## Проверки
 
 ```bash
-pytest -v --ignore=tests/test_api.py
-flake8 .
+python manage.py check
+python manage.py showmigrations
+pytest -v
+flake8 . --extend-exclude=venv
 ```
-
-## Текущий этап разработки
-
-На ПР7 данные перенесены из JSON в SQLite:
-
-- создана база `data/releases.sqlite`;
-- таблицы созданы скриптом `sql/schema.sql`;
-- данные перенесены скриптом `db/import_json.py`;
-- SQL-запросы сохранены в `sql/queries.sql`;
-- Django-представления получают данные из SQLite;
-- страницы списков, поиска свободных продуктов, готовых релизов
-  и статистики работают с базой.
-
-JSON-файлы и классы ПР3 сохранены. Django ORM не используется.
 
 ## План развития
 
-- Django ORM и миграции моделей;
-- формы создания/редактирования;
+- административная панель Django;
+- формы создания и редактирования релизов;
 - аутентификация пользователей;
 - REST API и CI/CD.

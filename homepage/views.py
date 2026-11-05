@@ -2,39 +2,24 @@
 
 from django.shortcuts import render
 
-from db.database import get_connection
+from developers.models import Developer
+from products.models import Product
+from releases.models import Release
+from tasks.models import Task
 
 
 def index(request):
-    """Главная страница: краткая сводка из SQLite."""
-    connection = get_connection()
-    try:
-        products_count = connection.execute(
-            "SELECT COUNT(*) AS n FROM products"
-        ).fetchone()["n"]
-        releases_count = connection.execute(
-            """
-            SELECT COUNT(*) AS n
-            FROM releases
-            WHERE status != 'cancelled'
-            """
-        ).fetchone()["n"]
-        developers_count = connection.execute(
-            "SELECT COUNT(*) AS n FROM developers"
-        ).fetchone()["n"]
-        tasks_count = connection.execute(
-            "SELECT COUNT(*) AS n FROM tasks"
-        ).fetchone()["n"]
-    finally:
-        connection.close()
+    """Главная страница: краткая сводка через ORM (count)."""
     return render(
         request,
         "homepage/index.html",
         {
-            "products_count": products_count,
-            "releases_count": releases_count,
-            "developers_count": developers_count,
-            "tasks_count": tasks_count,
+            "products_count": Product.objects.count(),
+            "releases_count": Release.objects.exclude(
+                status="cancelled"
+            ).count(),
+            "developers_count": Developer.objects.count(),
+            "tasks_count": Task.objects.count(),
         },
     )
 

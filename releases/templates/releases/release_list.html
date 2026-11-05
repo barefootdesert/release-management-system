@@ -6,24 +6,89 @@
 <header class="page-head">
   <h1>Активные релизы</h1>
   <p>
-    Всего:
-    <data value="{{ releases|length }}">{{ releases|length }}</data>
-    · JOIN <code>releases</code> и <code>products</code>
+    Найдено:
+    <data value="{{ page_obj.paginator.count }}">{{ page_obj.paginator.count }}</data>
+    · <code>Release.objects.exclude(status="cancelled")</code>
   </p>
 </header>
 
+<form method="get" class="filter-form filter-grid">
+  <label for="date">
+    Дата релиза
+    <span class="type-chip">DateField · input date</span>
+    <input type="date" id="date" name="date" value="{{ release_date }}">
+  </label>
+  <label for="product">
+    Продукт
+    <span class="type-chip">ForeignKey · select</span>
+    <select id="product" name="product">
+      <option value="">Все продукты</option>
+      {% for product in products %}
+        <option
+          value="{{ product.pk }}"
+          {% if selected_product == product.pk|stringformat:"s" %}selected{% endif %}
+        >{{ product.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label for="developer">
+    Разработчик (по задачам)
+    <span class="type-chip">tasks__developer · select</span>
+    <select id="developer" name="developer">
+      <option value="">Все разработчики</option>
+      {% for developer in developers %}
+        <option
+          value="{{ developer.pk }}"
+          {% if selected_developer == developer.pk|stringformat:"s" %}selected{% endif %}
+        >{{ developer.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label for="environment">
+    Окружение
+    <span class="type-chip">CharField choices · select</span>
+    <select id="environment" name="environment">
+      <option value="">Все окружения</option>
+      {% for value, label in environments %}
+        <option
+          value="{{ value }}"
+          {% if selected_environment == value %}selected{% endif %}
+        >{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label for="sort">
+    Сортировать по
+    <span class="type-chip">order_by · whitelist</span>
+    <select id="sort" name="sort">
+      <option value="date" {% if sort == "date" %}selected{% endif %}>дате</option>
+      <option value="product" {% if sort == "product" %}selected{% endif %}>продукту</option>
+      <option value="version" {% if sort == "version" %}selected{% endif %}>версии</option>
+      <option value="approvals" {% if sort == "approvals" %}selected{% endif %}>согласованиям</option>
+    </select>
+  </label>
+  <div class="form-actions">
+    <button type="submit" class="button">Найти</button>
+    <a class="button secondary" href="{% url 'releases:releases' %}">Сбросить</a>
+  </div>
+</form>
+
+{% if error %}
+  <p class="form-error" role="alert">{{ error }}</p>
+{% endif %}
+
 <table class="data-table">
-  <caption>Поля выводятся элементами, соответствующими типам SQLite</caption>
+  <caption>Поля выводятся HTML-элементами, соответствующими типам полей модели</caption>
   <thead>
     <tr>
-      <th data-sql-type="INTEGER">id</th>
-      <th data-sql-type="TEXT">product.name</th>
-      <th data-sql-type="TEXT">version</th>
-      <th data-sql-type="TEXT">environment</th>
-      <th data-sql-type="TEXT">release_date</th>
-      <th data-sql-type="INTEGER">tests_passed</th>
-      <th data-sql-type="INTEGER">approvals</th>
-      <th data-sql-type="TEXT">status</th>
+      <th data-field-type="BigAutoField">id</th>
+      <th data-field-type="ForeignKey">product</th>
+      <th data-field-type="CharField">version</th>
+      <th data-field-type="CharField choices">environment</th>
+      <th data-field-type="DateField">release_date</th>
+      <th data-field-type="BooleanField">tests_passed</th>
+      <th data-field-type="PositiveSmallIntegerField">approvals</th>
+      <th data-field-type="CharField">status</th>
     </tr>
   </thead>
   <tbody>
@@ -42,8 +107,8 @@
         <td>{{ release.version }}</td>
         <td>{{ release.environment }}</td>
         <td>
-          <time datetime="{{ release.release_date }}">
-            {{ release.release_date }}
+          <time datetime="{{ release.release_date|date:'Y-m-d' }}">
+            {{ release.release_date|date:"d.m.Y" }}
           </time>
         </td>
         <td>
@@ -62,13 +127,9 @@
           >
             {{ release.approvals_count }} / {{ release.required_approvals }}
           </meter>
-          <data value="{{ release.approvals_count }}">
-            {{ release.approvals_count }}
-          </data>
+          <data value="{{ release.approvals_count }}">{{ release.approvals_count }}</data>
           /
-          <data value="{{ release.required_approvals }}">
-            {{ release.required_approvals }}
-          </data>
+          <data value="{{ release.required_approvals }}">{{ release.required_approvals }}</data>
         </td>
         <td>
           {% include "releases/includes/release_status.html" %}
@@ -76,9 +137,30 @@
       </tr>
     {% empty %}
       <tr>
-        <td colspan="8">Релизы ещё не добавлены.</td>
+        <td colspan="8">По выбранным условиям релизов нет.</td>
       </tr>
     {% endfor %}
   </tbody>
 </table>
+
+{% if page_obj.has_other_pages %}
+  <nav class="pagination" aria-label="Страницы списка релизов">
+    {% if page_obj.has_previous %}
+      <a class="button secondary compact"
+         href="{% querystring page=page_obj.previous_page_number %}">← Назад</a>
+    {% endif %}
+    {% for page_number in page_obj.paginator.page_range %}
+      {% if page_number == page_obj.number %}
+        <span class="button compact" aria-current="page">{{ page_number }}</span>
+      {% else %}
+        <a class="button secondary compact"
+           href="{% querystring page=page_number %}">{{ page_number }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+      <a class="button secondary compact"
+         href="{% querystring page=page_obj.next_page_number %}">Вперёд →</a>
+    {% endif %}
+  </nav>
+{% endif %}
 {% endblock %}

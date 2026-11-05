@@ -1,177 +1,156 @@
-"""View-функции страниц релизов (данные из SQLite)."""
+"""View-функции страниц релизов (Django ORM)."""
 
-from django.shortcuts import render
+from datetime import datetime
 
-from db.database import get_connection
+from django.core.paginator import Paginator
+from django.db.models import Count, F, Q
+from django.shortcuts import get_object_or_404, render
+
+from developers.models import Developer
+from products.models import Product
+from releases.models import Release
+
+RELEASE_FIELDS = (
+    "id",
+    "product_id",
+    "product_name",
+    "version",
+    "environment",
+    "release_date",
+    "tests_passed",
+    "approvals_count",
+    "required_approvals",
+    "is_hotfix",
+    "status",
+)
+
+SORT_FIELDS = {
+    "date": "release_date",
+    "product": "product__name",
+    "version": "version",
+    "approvals": "-approvals_count",
+}
 
 
 def releases_list(request):
-    """Список активных релизов из SQLite с JOIN (ПР7)."""
-    connection = get_connection()
-    try:
-        releases = connection.execute(
-            """
-            SELECT
-                r.id,
-                r.version,
-                r.environment,
-                r.status,
-                r.release_date,
-                r.tests_passed,
-                r.approvals_count,
-                r.required_approvals,
-                r.is_hotfix,
-                p.id AS product_id,
-                p.name AS product_name
-            FROM releases AS r
-            JOIN products AS p ON p.id = r.product_id
-            WHERE r.status != 'cancelled'
-            ORDER BY r.release_date
-            """
-        ).fetchall()
-    finally:
-        connection.close()
-    return render(
-        request,
-        "releases/release_list.html",
-        {"releases": releases},
+    """Активные релизы с фильтрами, сортировкой и пагинацией."""
+    release_date = request.GET.get("date", "").strip()
+    product_id = request.GET.get("product", "").strip()
+    developer_id = request.GET.get("developer", "").strip()
+    environment = request.GET.get("environment", "").strip()
+    sort = request.GET.get("sort", "date")
+    error = None
+
+    releases = Release.objects.exclude(status="cancelled")
+
+    if release_date:
+        try:
+            selected_date = datetime.strptime(
+                release_date, "%Y-%m-%d"
+            ).date()
+        except ValueError:
+            error = "Укажите корректную дату."
+        else:
+            releases = releases.filter(release_date=selected_date)
+
+    if product_id.isdigit():
+        releases = releases.filter(product_id=int(product_id))
+    if developer_id.isdigit():
+        releases = releases.filter(
+            tasks__developer_id=int(developer_id)
+        ).distinct()
+    if environment in Release.Environment.values:
+        releases = releases.filter(environment=environment)
+
+    sort_field = SORT_FIELDS.get(sort, "release_date")
+    releases = (
+        releases.annotate(product_name=F("product__name"))
+        .values(*RELEASE_FIELDS)
+        .order_by(sort_field, "id")
     )
+
+    paginator = Paginator(releases, 5)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    context = {
+        "page_obj": page_obj,
+        "releases": page_obj.object_list,
+        "release_date": release_date,
+        "selected_product": product_id,
+        "selected_developer": developer_id,
+        "selected_environment": environment,
+        "sort": sort,
+        "products": Product.objects.order_by("name"),
+        "developers": Developer.objects.order_by("name"),
+        "environments": Release.Environment.choices,
+        "error": error,
+    }
+    return render(request, "releases/release_list.html", context)
 
 
 def release_detail(request, release_id):
-    """Карточка релиза из SQLite; 404, если запись не найдена."""
-    connection = get_connection()
-    try:
-        release = connection.execute(
-            """
-            SELECT
-                r.id,
-                r.product_id,
-                r.version,
-                r.environment,
-                r.status,
-                r.release_date,
-                r.tests_passed,
-                r.approvals_count,
-                r.required_approvals,
-                r.is_hotfix,
-                p.name AS product_name
-            FROM releases AS r
-            JOIN products AS p ON p.id = r.product_id
-            WHERE r.id = ?
-            """,
-            [release_id],
-        ).fetchone()
-    finally:
-        connection.close()
-    status = 404 if release is None else 200
+    """Карточка релиза; 404, если запись не найдена."""
+    release = get_object_or_404(
+        Release.objects.select_related("product"),
+        pk=release_id,
+    )
+    tasks = release.tasks.select_related("developer").order_by("id")
     return render(
         request,
         "releases/release_detail.html",
-        {"release": release},
-        status=status,
+        {"release": release, "tasks": tasks},
     )
 
 
 def ready_releases(request):
-    """Релизы, готовые к публикации (WHERE по нескольким полям)."""
-    connection = get_connection()
-    try:
-        releases = connection.execute(
-            """
-            SELECT
-                r.id,
-                p.name AS product_name,
-                r.version,
-                r.environment,
-                r.release_date,
-                r.approvals_count,
-                r.required_approvals,
-                r.is_hotfix
-            FROM releases AS r
-            JOIN products AS p ON p.id = r.product_id
-            WHERE r.status = 'planned'
-              AND r.tests_passed = 1
-              AND (
-                    r.environment = 'test'
-                 OR (r.environment = 'staging'
-                     AND (r.approvals_count >= 1 OR r.is_hotfix = 1))
-                 OR (r.environment = 'production'
-                     AND r.approvals_count >= r.required_approvals)
-              )
-            ORDER BY r.release_date
-            """
-        ).fetchall()
-    finally:
-        connection.close()
-    return render(
-        request,
-        "releases/ready.html",
-        {"releases": releases},
+    """Релизы, готовые к публикации (Q-условия и сравнение полей F)."""
+    publish_rules = (
+        Q(environment=Release.Environment.TEST)
+        | Q(environment=Release.Environment.STAGING)
+        & (Q(approvals_count__gte=1) | Q(is_hotfix=True))
+        | Q(
+            environment=Release.Environment.PRODUCTION,
+            approvals_count__gte=F("required_approvals"),
+        )
     )
+    releases = (
+        Release.objects.filter(status="planned", tests_passed=True)
+        .filter(publish_rules)
+        .annotate(product_name=F("product__name"))
+        .values(*RELEASE_FIELDS)
+        .order_by("release_date", "id")
+    )
+    return render(request, "releases/ready.html", {"releases": releases})
 
 
 def statistics(request):
-    """Статистика релизов: GROUP BY и опциональный HAVING."""
-    min_raw = request.GET.get("min", "")
-    min_count = None
-    if min_raw not in (None, ""):
-        try:
-            min_count = int(min_raw)
-        except ValueError:
-            min_count = None
+    """Статистика: annotate(Count) по продуктам и фильтр по агрегату."""
+    min_raw = request.GET.get("min", "").strip()
+    min_count = int(min_raw) if min_raw.isdigit() else None
 
-    connection = get_connection()
-    try:
-        if min_count is None:
-            stats = connection.execute(
-                """
-                SELECT
-                    p.id,
-                    p.name,
-                    COUNT(r.id) AS releases_count
-                FROM products AS p
-                LEFT JOIN releases AS r ON r.product_id = p.id
-                GROUP BY p.id, p.name
-                ORDER BY releases_count DESC, p.name
-                """
-            ).fetchall()
-        else:
-            stats = connection.execute(
-                """
-                SELECT
-                    p.id,
-                    p.name,
-                    COUNT(r.id) AS releases_count
-                FROM products AS p
-                LEFT JOIN releases AS r ON r.product_id = p.id
-                GROUP BY p.id, p.name
-                HAVING COUNT(r.id) >= ?
-                ORDER BY releases_count DESC, p.name
-                """,
-                [min_count],
-            ).fetchall()
-        total_active = connection.execute(
-            """
-            SELECT COUNT(*) AS releases_count
-            FROM releases
-            WHERE status != 'cancelled'
-            """
-        ).fetchone()
-    finally:
-        connection.close()
+    stats = Product.objects.annotate(
+        releases_count=Count("releases"),
+        active_count=Count(
+            "releases",
+            filter=~Q(releases__status="cancelled"),
+        ),
+    )
+    if min_count is not None:
+        stats = stats.filter(releases_count__gte=min_count)
+    stats = stats.values(
+        "id", "name", "releases_count", "active_count"
+    ).order_by("-releases_count", "name")
 
-    max_count = 0
-    for item in stats:
-        if item["releases_count"] > max_count:
-            max_count = item["releases_count"]
+    max_count = max((item["releases_count"] for item in stats), default=0)
 
     return render(
         request,
         "releases/statistics.html",
         {
             "statistics": stats,
-            "total_active": total_active["releases_count"],
+            "total_active": Release.objects.exclude(
+                status="cancelled"
+            ).count(),
             "min_count": min_count,
             "max_count": max_count or 1,
         },

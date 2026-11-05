@@ -1,76 +1,65 @@
 {% extends "base.html" %}
 
-{% block title %}
-  {% if product %}{{ product.name }}{% else %}Продукт не найден{% endif %}
-{% endblock %}
+{% block title %}{{ product.name }}{% endblock %}
 
 {% block content %}
-{% if product %}
-  <article class="record" data-entity="product">
-    <h1 data-sql-type="TEXT">{{ product.name|default:"Без названия" }}</h1>
-    <dl class="typed-fields">
-      <div data-sql-type="INTEGER">
-        <dt>id</dt>
-        <dd><data value="{{ product.id }}">{{ product.id }}</data></dd>
-      </div>
-      <div data-sql-type="TEXT">
-        <dt>name</dt>
-        <dd>{{ product.name|default:"Без названия" }}</dd>
-      </div>
-    </dl>
-    <p>
-      <a class="button secondary" href="{% url 'products:products' %}">
-        ← к списку продуктов
-      </a>
-    </p>
-  </article>
-
-  <section>
-    <h2>Релизы продукта</h2>
-    <table class="data-table">
-      <caption>JOIN не нужен: выборка из <code>releases</code> по product_id</caption>
-      <thead>
-        <tr>
-          <th data-sql-type="INTEGER">id</th>
-          <th data-sql-type="TEXT">version</th>
-          <th data-sql-type="TEXT">environment</th>
-          <th data-sql-type="TEXT">release_date</th>
-          <th data-sql-type="TEXT">status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in related_releases %}
-          <tr>
-            <td>
-              <a href="{% url 'releases:release_detail' item.id %}">
-                <data value="{{ item.id }}">{{ item.id }}</data>
-              </a>
-            </td>
-            <td>{{ item.version }}</td>
-            <td>{{ item.environment }}</td>
-            <td>
-              <time datetime="{{ item.release_date }}">
-                {{ item.release_date }}
-              </time>
-            </td>
-            <td>
-              {% include "releases/includes/release_status.html" with release=item %}
-            </td>
-          </tr>
-        {% empty %}
-          <tr>
-            <td colspan="5">Релизов пока нет.</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
-{% else %}
-  <article class="empty-state">
-    <h1>Продукт не найден</h1>
+<article class="record" data-entity="product">
+  <h1>{{ product.name|default:"Без названия" }}</h1>
+  <dl class="typed-fields">
+    <div data-field-type="BigAutoField">
+      <dt>id</dt>
+      <dd><data value="{{ product.id }}">{{ product.id }}</data></dd>
+    </div>
+    <div data-field-type="CharField">
+      <dt>name</dt>
+      <dd>{{ product.name|default:"Без названия" }}</dd>
+    </div>
+  </dl>
+  <p>
     <a class="button secondary" href="{% url 'products:products' %}">
       ← к списку продуктов
     </a>
-  </article>
-{% endif %}
+  </p>
+</article>
+
+<section>
+  <h2>Релизы продукта</h2>
+  <table class="data-table">
+    <caption>Обратная связь <code>product.releases</code> (related_name)</caption>
+    <thead>
+      <tr>
+        <th data-field-type="BigAutoField">id</th>
+        <th data-field-type="CharField">version</th>
+        <th data-field-type="CharField choices">environment</th>
+        <th data-field-type="DateField">release_date</th>
+        <th data-field-type="CharField">status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in related_releases %}
+        <tr>
+          <td>
+            <a href="{% url 'releases:release_detail' item.id %}">
+              <data value="{{ item.id }}">{{ item.id }}</data>
+            </a>
+          </td>
+          <td>{{ item.version }}</td>
+          <td>{{ item.environment }}</td>
+          <td>
+            <time datetime="{{ item.release_date|date:'Y-m-d' }}">
+              {{ item.release_date|date:"d.m.Y" }}
+            </time>
+          </td>
+          <td>
+            {% include "releases/includes/release_status.html" with release=item %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">Релизов пока нет.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
 {% endblock %}

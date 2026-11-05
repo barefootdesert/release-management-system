@@ -1,18 +1,14 @@
 <article class="entity-card" data-entity="product">
-  <p class="type-chip">INTEGER · id</p>
+  <p class="type-chip">BigAutoField · id</p>
   <p>
     <data value="{{ product.id }}">#{{ product.id }}</data>
   </p>
-  <h2 data-sql-type="TEXT">
-    {{ product.name|default:"Без названия" }}
-  </h2>
-  {% if product.releases_count or product.releases_count == 0 %}
-    <p class="type-chip">INTEGER · COUNT</p>
+  <h2>{{ product.name|default:"Без названия" }}</h2>
+  {% if product.releases_count is not None %}
+    <p class="type-chip">annotate · Count("releases")</p>
     <p>
       релизов:
-      <data value="{{ product.releases_count }}">
-        {{ product.releases_count }}
-      </data>
+      <data value="{{ product.releases_count }}">{{ product.releases_count }}</data>
     </p>
   {% endif %}
   <a class="button compact" href="{% url 'products:product_detail' product.id %}">

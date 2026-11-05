@@ -6,9 +6,10 @@
 <header class="page-head">
   <h1>Релизы, готовые к публикации</h1>
   <p>
-    Условия WHERE учитывают типы полей:
-    <code>tests_passed</code> и <code>is_hotfix</code> — INTEGER 0/1,
-    <code>approvals_count</code> сравнивается как число.
+    Условия собираются объектами <code>Q</code>:
+    <code>tests_passed</code> и <code>is_hotfix</code> — BooleanField,
+    сравнение <code>approvals_count &gt;= required_approvals</code>
+    выполняется выражением <code>F()</code>.
   </p>
 </header>
 
@@ -16,13 +17,13 @@
   <caption>Найдено: {{ releases|length }}</caption>
   <thead>
     <tr>
-      <th data-sql-type="INTEGER">id</th>
-      <th data-sql-type="TEXT">product</th>
-      <th data-sql-type="TEXT">version</th>
-      <th data-sql-type="TEXT">environment</th>
-      <th data-sql-type="TEXT">release_date</th>
-      <th data-sql-type="INTEGER">approvals</th>
-      <th data-sql-type="INTEGER">is_hotfix</th>
+      <th data-field-type="BigAutoField">id</th>
+      <th data-field-type="ForeignKey">product</th>
+      <th data-field-type="CharField">version</th>
+      <th data-field-type="CharField choices">environment</th>
+      <th data-field-type="DateField">release_date</th>
+      <th data-field-type="PositiveSmallIntegerField">approvals</th>
+      <th data-field-type="BooleanField">is_hotfix</th>
     </tr>
   </thead>
   <tbody>
@@ -37,18 +38,14 @@
         <td>{{ release.version }}</td>
         <td>{{ release.environment }}</td>
         <td>
-          <time datetime="{{ release.release_date }}">
-            {{ release.release_date }}
+          <time datetime="{{ release.release_date|date:'Y-m-d' }}">
+            {{ release.release_date|date:"d.m.Y" }}
           </time>
         </td>
         <td>
-          <data value="{{ release.approvals_count }}">
-            {{ release.approvals_count }}
-          </data>
+          <data value="{{ release.approvals_count }}">{{ release.approvals_count }}</data>
           /
-          <data value="{{ release.required_approvals }}">
-            {{ release.required_approvals }}
-          </data>
+          <data value="{{ release.required_approvals }}">{{ release.required_approvals }}</data>
         </td>
         <td>
           <input

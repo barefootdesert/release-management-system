@@ -1,28 +1,21 @@
-"""View-функции страниц продуктов (данные из SQLite)."""
+"""View-функции страниц продуктов (Django ORM)."""
 
-from django.shortcuts import render
+from datetime import datetime
 
-from db.database import get_connection
+from django.db.models import Count
+from django.shortcuts import get_object_or_404, render
+
+from products.models import Product
+from releases.models import Release
 
 
 def products_list(request):
-    """Список продуктов из SQLite (SELECT + LEFT JOIN + COUNT)."""
-    connection = get_connection()
-    try:
-        products = connection.execute(
-            """
-            SELECT
-                p.id,
-                p.name,
-                COUNT(r.id) AS releases_count
-            FROM products AS p
-            LEFT JOIN releases AS r ON r.product_id = p.id
-            GROUP BY p.id, p.name
-            ORDER BY p.name
-            """
-        ).fetchall()
-    finally:
-        connection.close()
+    """Список продуктов с количеством релизов (annotate + Count)."""
+    products = (
+        Product.objects.annotate(releases_count=Count("releases"))
+        .values("id", "name", "releases_count")
+        .order_by("name")
+    )
     return render(
         request,
         "products/product_list.html",
@@ -31,76 +24,45 @@ def products_list(request):
 
 
 def product_detail(request, product_id):
-    """Карточка продукта из SQLite; 404, если запись не найдена."""
-    connection = get_connection()
-    try:
-        product = connection.execute(
-            """
-            SELECT id, name
-            FROM products
-            WHERE id = ?
-            """,
-            [product_id],
-        ).fetchone()
-        related = []
-        if product is not None:
-            related = connection.execute(
-                """
-                SELECT
-                    id,
-                    version,
-                    environment,
-                    status,
-                    release_date,
-                    tests_passed,
-                    approvals_count,
-                    required_approvals,
-                    is_hotfix
-                FROM releases
-                WHERE product_id = ?
-                ORDER BY release_date
-                """,
-                [product_id],
-            ).fetchall()
-    finally:
-        connection.close()
-    status = 404 if product is None else 200
+    """Карточка продукта и его релизы; 404, если продукта нет."""
+    product = get_object_or_404(Product, pk=product_id)
+    related_releases = product.releases.order_by("release_date", "id")
     return render(
         request,
         "products/product_detail.html",
-        {"product": product, "related_releases": related},
-        status=status,
+        {"product": product, "related_releases": related_releases},
     )
 
 
 def available_products(request):
-    """Продукты без активного релиза на выбранную дату (NOT IN)."""
-    release_date = request.GET.get("date")
-    products = []
+    """Продукты без активного релиза на выбранную дату."""
+    release_date = request.GET.get("date", "").strip()
+    products = Product.objects.none()
+    error = None
+
     if release_date:
-        connection = get_connection()
         try:
-            products = connection.execute(
-                """
-                SELECT p.id, p.name
-                FROM products AS p
-                WHERE p.id NOT IN (
-                    SELECT product_id
-                    FROM releases
-                    WHERE release_date = ?
-                      AND status != 'cancelled'
-                )
-                ORDER BY p.name
-                """,
-                [release_date],
-            ).fetchall()
-        finally:
-            connection.close()
+            selected_date = datetime.strptime(
+                release_date, "%Y-%m-%d"
+            ).date()
+        except ValueError:
+            error = "Укажите корректную дату."
+        else:
+            busy_ids = (
+                Release.objects.filter(release_date=selected_date)
+                .exclude(status="cancelled")
+                .values_list("product_id", flat=True)
+            )
+            products = Product.objects.exclude(pk__in=busy_ids).order_by(
+                "name"
+            )
+
     return render(
         request,
         "products/available.html",
         {
             "products": products,
             "release_date": release_date,
+            "error": error,
         },
     )

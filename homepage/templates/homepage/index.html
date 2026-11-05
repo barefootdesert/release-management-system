@@ -6,46 +6,47 @@
 <article class="hero">
   <h1>Учёт продуктов и релизов</h1>
   <p>
-    Данные читаются из SQLite через <code>sqlite3</code>.
+    Данные хранятся в моделях Django и читаются через ORM.
     Каждое поле выводится HTML-элементом своего типа:
-    идентификаторы — <code>&lt;data&gt;</code>, даты —
-    <code>&lt;time&gt;</code>, логические флаги — чекбоксы,
-    счётчики — <code>&lt;meter&gt;</code>.
+    идентификаторы и числа — <code>&lt;data&gt;</code>,
+    <code>DateField</code> — <code>&lt;time&gt;</code>,
+    <code>BooleanField</code> — чекбоксы,
+    счётчики согласований — <code>&lt;meter&gt;</code>.
   </p>
 </article>
 
-<section class="summary" aria-label="Сводка по таблицам">
-  <article class="stat-tile" data-sql-type="INTEGER">
-    <p class="type-chip">INTEGER · COUNT</p>
+<section class="summary" aria-label="Сводка по моделям">
+  <article class="stat-tile">
+    <p class="type-chip">Product.objects.count()</p>
     <p class="stat-value">
       <data value="{{ products_count }}">{{ products_count }}</data>
     </p>
     <h2>Продукты</h2>
     <a href="{% url 'products:products' %}">Открыть список</a>
   </article>
-  <article class="stat-tile" data-sql-type="INTEGER">
-    <p class="type-chip">INTEGER · COUNT</p>
+  <article class="stat-tile">
+    <p class="type-chip">Release.objects.exclude().count()</p>
     <p class="stat-value">
       <data value="{{ releases_count }}">{{ releases_count }}</data>
     </p>
     <h2>Активные релизы</h2>
     <a href="{% url 'releases:releases' %}">Открыть список</a>
   </article>
-  <article class="stat-tile" data-sql-type="INTEGER">
-    <p class="type-chip">INTEGER · COUNT</p>
+  <article class="stat-tile">
+    <p class="type-chip">Developer.objects.count()</p>
     <p class="stat-value">
       <data value="{{ developers_count }}">{{ developers_count }}</data>
     </p>
     <h2>Разработчики</h2>
-    <p>таблица <code>developers</code></p>
+    <p>модель <code>Developer</code></p>
   </article>
-  <article class="stat-tile" data-sql-type="INTEGER">
-    <p class="type-chip">INTEGER · COUNT</p>
+  <article class="stat-tile">
+    <p class="type-chip">Task.objects.count()</p>
     <p class="stat-value">
       <data value="{{ tasks_count }}">{{ tasks_count }}</data>
     </p>
     <h2>Задачи</h2>
-    <p>таблица <code>tasks</code></p>
+    <p>модель <code>Task</code></p>
   </article>
 </section>
 

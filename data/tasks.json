@@ -22,5 +22,37 @@
     "product_id": 2,
     "release_id": 2,
     "status": "todo"
+  },
+  {
+    "id": 4,
+    "title": "Добавить шаблоны push-уведомлений",
+    "developer_id": 1,
+    "product_id": 4,
+    "release_id": 7,
+    "status": "in_progress"
+  },
+  {
+    "id": 5,
+    "title": "Регресс мобильного приложения",
+    "developer_id": 2,
+    "product_id": 3,
+    "release_id": 3,
+    "status": "todo"
+  },
+  {
+    "id": 6,
+    "title": "Новая таблица пользователей в админке",
+    "developer_id": 3,
+    "product_id": 5,
+    "release_id": 10,
+    "status": "todo"
+  },
+  {
+    "id": 7,
+    "title": "Собрать требования к API уведомлений",
+    "developer_id": 1,
+    "product_id": 4,
+    "release_id": null,
+    "status": "done"
   }
 ]

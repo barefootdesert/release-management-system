@@ -6,15 +6,17 @@
 <header class="page-head">
   <h1>Продукты без активного релиза</h1>
   <p>
-    Параметр <code>date</code> имеет HTML-тип <code>date</code>
-    и сравнивается с полем SQLite <code>TEXT</code> формата YYYY-MM-DD.
+    Значение <code>input type="date"</code> проверяется через
+    <code>datetime.strptime</code> и сравнивается с полем
+    <code>DateField</code>; занятые продукты исключаются через
+    <code>exclude(pk__in=...)</code>.
   </p>
 </header>
 
 <form method="get" class="filter-form">
   <label for="date">
     Дата релиза
-    <span class="type-chip">HTML date · SQLite TEXT</span>
+    <span class="type-chip">input date · DateField</span>
   </label>
   <input
     type="date"
@@ -26,7 +28,9 @@
   <button type="submit" class="button">Найти</button>
 </form>
 
-{% if release_date %}
+{% if error %}
+  <p class="form-error" role="alert">{{ error }}</p>
+{% elif release_date %}
   <section>
     <h2>
       Дата:
