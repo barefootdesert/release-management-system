@@ -13,7 +13,7 @@ def products_list(request):
     """Список продуктов с количеством релизов (annotate + Count)."""
     products = (
         Product.objects.annotate(releases_count=Count("releases"))
-        .values("id", "name", "releases_count")
+        .values("id", "name", "slug", "releases_count")
         .order_by("name")
     )
     return render(
@@ -23,9 +23,9 @@ def products_list(request):
     )
 
 
-def product_detail(request, product_id):
-    """Карточка продукта и его релизы; 404, если продукта нет."""
-    product = get_object_or_404(Product, pk=product_id)
+def product_detail(request, slug):
+    """Карточка продукта по slug и его релизы; 404, если продукта нет."""
+    product = get_object_or_404(Product, slug=slug)
     related_releases = product.releases.order_by("release_date", "id")
     return render(
         request,
@@ -35,7 +35,10 @@ def product_detail(request, product_id):
 
 
 def available_products(request):
-    """Продукты без активного релиза на выбранную дату."""
+    """Продукты без активного релиза на выбранную дату.
+
+    Отменённые и опубликованные релизы продукт не занимают.
+    """
     release_date = request.GET.get("date", "").strip()
     products = Product.objects.none()
     error = None
@@ -49,8 +52,8 @@ def available_products(request):
             error = "Укажите корректную дату."
         else:
             busy_ids = (
-                Release.objects.filter(release_date=selected_date)
-                .exclude(status="cancelled")
+                Release.objects.active()
+                .for_date(selected_date)
                 .values_list("product_id", flat=True)
             )
             products = Product.objects.exclude(pk__in=busy_ids).order_by(

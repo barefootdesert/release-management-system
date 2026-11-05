@@ -1,5 +1,7 @@
 """Настройки Django-проекта системы управления релизами."""
 
+import os
+import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -36,6 +38,17 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# Debug Toolbar не поддерживает запуск тестов, поэтому подключается
+# только при обычной работе сервера разработки.
+TESTING = "test" in sys.argv or "PYTEST_VERSION" in os.environ
+USE_DEBUG_TOOLBAR = DEBUG and not TESTING
+
+if USE_DEBUG_TOOLBAR:
+    INSTALLED_APPS.append("debug_toolbar")
+    MIDDLEWARE.insert(1, "debug_toolbar.middleware.DebugToolbarMiddleware")
+
+INTERNAL_IPS = ["127.0.0.1"]
+
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
@@ -48,6 +61,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "products.context_processors.release_context",
             ],
         },
     },

@@ -15,9 +15,7 @@ def index(request):
         "homepage/index.html",
         {
             "products_count": Product.objects.count(),
-            "releases_count": Release.objects.exclude(
-                status="cancelled"
-            ).count(),
+            "releases_count": Release.objects.active().count(),
             "developers_count": Developer.objects.count(),
             "tasks_count": Task.objects.count(),
         },

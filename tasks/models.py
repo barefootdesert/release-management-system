@@ -11,16 +11,18 @@ class Task(models.Model):
         IN_PROGRESS = "in_progress", "В работе"
         DONE = "done", "Готово"
 
-    title = models.CharField(max_length=200)
+    title = models.CharField("название", max_length=200)
     developer = models.ForeignKey(
         "developers.Developer",
         on_delete=models.PROTECT,
         related_name="tasks",
+        verbose_name="исполнитель",
     )
     product = models.ForeignKey(
         "products.Product",
         on_delete=models.PROTECT,
         related_name="tasks",
+        verbose_name="продукт",
     )
     release = models.ForeignKey(
         "releases.Release",
@@ -28,8 +30,12 @@ class Task(models.Model):
         null=True,
         blank=True,
         related_name="tasks",
+        verbose_name="релиз",
+        help_text="Можно оставить пустым, если задача не привязана "
+        "к релизу.",
     )
     status = models.CharField(
+        "статус",
         max_length=20,
         choices=Status.choices,
         default=Status.TODO,
@@ -37,6 +43,8 @@ class Task(models.Model):
 
     class Meta:
         ordering = ["id"]
+        verbose_name = "задача"
+        verbose_name_plural = "задачи"
 
     def __str__(self):
         return self.title

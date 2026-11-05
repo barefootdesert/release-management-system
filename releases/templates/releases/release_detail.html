@@ -16,7 +16,7 @@
     <div data-field-type="ForeignKey → Product">
       <dt>product</dt>
       <dd>
-        <a href="{% url 'products:product_detail' release.product_id %}">
+        <a href="{{ release.product.get_absolute_url }}">
           {{ release.product.name }}
         </a>
       </dd>
@@ -74,9 +74,24 @@
         {{ release.approvals_count }} / {{ release.required_approvals }}
       </dd>
     </div>
-    <div data-field-type="CharField">
+    <div data-field-type="GeneratedField (BooleanField)">
+      <dt>is_approved</dt>
+      <dd>
+        <input
+          type="checkbox"
+          {% if release.is_approved %}checked{% endif %}
+          disabled
+          aria-label="Согласован"
+        >
+        {{ release.is_approved|yesno:"да,нет" }}
+      </dd>
+    </div>
+    <div data-field-type="CharField · TextChoices">
       <dt>status</dt>
-      <dd>{% include "releases/includes/release_status.html" %}</dd>
+      <dd>
+        <data value="{{ release.status }}">{{ release.get_status_display }}</data>
+        {% include "releases/includes/release_status.html" %}
+      </dd>
     </div>
     <div data-field-type="@property can_publish">
       <dt>можно публиковать</dt>

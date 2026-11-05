@@ -231,6 +231,18 @@ th[data-field-type]::after,
   font-weight: 600;
 }
 
+.nav-count {
+  display: inline-block;
+  min-width: 1.4em;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--accent-dark);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
 .filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));

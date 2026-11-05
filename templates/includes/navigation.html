@@ -1,9 +1,17 @@
 <nav class="site-nav" aria-label="Основной раздел">
   <ul>
     <li><a href="{% url 'homepage:index' %}">Главная</a></li>
-    <li><a href="{% url 'products:products' %}">Продукты</a></li>
+    <li>
+      <a href="{% url 'products:products' %}">
+        Продукты <data class="nav-count" value="{{ products_total }}">{{ products_total }}</data>
+      </a>
+    </li>
     <li><a href="{% url 'products:available' %}">Свободные</a></li>
-    <li><a href="{% url 'releases:releases' %}">Релизы</a></li>
+    <li>
+      <a href="{% url 'releases:releases' %}">
+        Релизы <data class="nav-count" value="{{ active_releases_total }}">{{ active_releases_total }}</data>
+      </a>
+    </li>
     <li><a href="{% url 'releases:ready' %}">Готовые</a></li>
     <li><a href="{% url 'releases:statistics' %}">Статистика</a></li>
   </ul>

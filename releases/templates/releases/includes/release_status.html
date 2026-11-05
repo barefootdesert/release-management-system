@@ -1,9 +1,9 @@
 {% if release.status == "cancelled" %}
-  <span class="status status-cancelled">отменён</span>
-{% elif release.status == "published" %}
-  <span class="status status-published">опубликован</span>
-{% elif release.tests_passed %}
-  <span class="status status-ready">готов</span>
+  <span class="status status-cancelled">Отменён</span>
+{% elif release.status == "completed" %}
+  <span class="status status-published">Опубликован</span>
+{% elif release.tests_passed and release.is_approved %}
+  <span class="status status-ready">Запланирован · согласован</span>
 {% else %}
-  <span class="status status-wait">{{ release.status|default:"ожидает" }}</span>
+  <span class="status status-wait">Запланирован</span>
 {% endif %}

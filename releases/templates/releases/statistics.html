@@ -6,11 +6,33 @@
 <header class="page-head">
   <h1>Статистика релизов</h1>
   <p>
-    Активных релизов:
-    <data value="{{ total_active }}">{{ total_active }}</data>
-    · <code>Release.objects.exclude(...).count()</code>
+    По статусам:
+    <code>Release.objects.aggregate(Count("id", filter=Q(status=...)))</code>
   </p>
 </header>
+
+<section class="summary" aria-label="Релизы по статусам">
+  <article class="stat-tile">
+    <p class="type-chip">Count("id")</p>
+    <p class="stat-value"><data value="{{ by_status.total }}">{{ by_status.total }}</data></p>
+    <h2>Всего</h2>
+  </article>
+  <article class="stat-tile">
+    <p class="type-chip">Status.ACTIVE</p>
+    <p class="stat-value"><data value="{{ by_status.active }}">{{ by_status.active }}</data></p>
+    <h2>Запланированы</h2>
+  </article>
+  <article class="stat-tile">
+    <p class="type-chip">Status.COMPLETED</p>
+    <p class="stat-value"><data value="{{ by_status.completed }}">{{ by_status.completed }}</data></p>
+    <h2>Опубликованы</h2>
+  </article>
+  <article class="stat-tile">
+    <p class="type-chip">Status.CANCELLED</p>
+    <p class="stat-value"><data value="{{ by_status.cancelled }}">{{ by_status.cancelled }}</data></p>
+    <h2>Отменены</h2>
+  </article>
+</section>
 
 <form method="get" class="filter-form">
   <label for="min">
@@ -38,7 +60,7 @@
       <th data-field-type="BigAutoField">id</th>
       <th data-field-type="CharField">name</th>
       <th data-field-type="Count">все релизы</th>
-      <th data-field-type="Count(filter=Q)">активные</th>
+      <th data-field-type="Count(filter=Q)">запланированные</th>
     </tr>
   </thead>
   <tbody>
@@ -46,7 +68,7 @@
       <tr>
         <td><data value="{{ item.id }}">{{ item.id }}</data></td>
         <td>
-          <a href="{% url 'products:product_detail' item.id %}">{{ item.name }}</a>
+          <a href="{% url 'products:product_detail' item.slug %}">{{ item.name }}</a>
         </td>
         <td>
           <meter min="0" max="{{ max_count }}" value="{{ item.releases_count }}">

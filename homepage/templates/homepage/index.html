@@ -25,7 +25,7 @@
     <a href="{% url 'products:products' %}">Открыть список</a>
   </article>
   <article class="stat-tile">
-    <p class="type-chip">Release.objects.exclude().count()</p>
+    <p class="type-chip">Release.objects.active().count()</p>
     <p class="stat-value">
       <data value="{{ releases_count }}">{{ releases_count }}</data>
     </p>

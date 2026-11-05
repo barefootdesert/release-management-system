@@ -11,7 +11,7 @@
       <data value="{{ product.releases_count }}">{{ product.releases_count }}</data>
     </p>
   {% endif %}
-  <a class="button compact" href="{% url 'products:product_detail' product.id %}">
+  <a class="button compact" href="{% url 'products:product_detail' product.slug %}">
     Открыть
   </a>
 </article>

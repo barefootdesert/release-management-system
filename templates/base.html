@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Система управления релизами{% endblock %}</title>
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'homepage/css/style.css' %}">
 </head>
 <body>
@@ -14,7 +14,7 @@
            alt="Логотип системы управления релизами"
            class="release-logo">
       <div>
-        <p class="brand-name">Система управления релизами</p>
+        <p class="brand-name">{{ site_name }}</p>
         <p class="brand-note">Django ORM · HTML по типам полей</p>
       </div>
     </div>
@@ -27,7 +27,7 @@
 
   <footer class="site-footer">
     <p>
-      Система управления релизами ·
+      {{ site_name }} ·
       <time id="current-year" datetime=""></time>
     </p>
   </footer>

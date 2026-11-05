@@ -8,7 +8,7 @@
   <p>
     Найдено:
     <data value="{{ page_obj.paginator.count }}">{{ page_obj.paginator.count }}</data>
-    · <code>Release.objects.exclude(status="cancelled")</code>
+    · <code>Release.objects.active()</code>
   </p>
 </header>
 
@@ -100,7 +100,7 @@
           </a>
         </td>
         <td>
-          <a href="{% url 'products:product_detail' release.product_id %}">
+          <a href="{% url 'products:product_detail' release.product_slug %}">
             {{ release.product_name }}
           </a>
         </td>

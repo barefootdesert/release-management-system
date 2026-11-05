@@ -6,10 +6,11 @@
 <header class="page-head">
   <h1>Релизы, готовые к публикации</h1>
   <p>
-    Условия собираются объектами <code>Q</code>:
-    <code>tests_passed</code> и <code>is_hotfix</code> — BooleanField,
-    сравнение <code>approvals_count &gt;= required_approvals</code>
-    выполняется выражением <code>F()</code>.
+    <code>Release.objects.ready_to_publish()</code> — метод менеджера:
+    условия по окружениям собраны объектами <code>Q</code>,
+    для production используется вычисляемое поле
+    <code>is_approved</code> (GeneratedField:
+    <code>approvals_count &gt;= required_approvals</code>).
   </p>
 </header>
 

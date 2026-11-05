@@ -19,6 +19,12 @@ sys.path.insert(0, str(BASE_DIR))
 
 SOURCE_DB = BASE_DIR / "data" / "releases.sqlite"
 
+STATUS_CODES = {
+    "planned": "active",
+    "published": "completed",
+    "cancelled": "cancelled",
+}
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
@@ -93,7 +99,7 @@ def main():
                     "required_approvals": row["required_approvals"],
                     "is_hotfix": bool(row["is_hotfix"]),
                     "release_date": date.fromisoformat(row["release_date"]),
-                    "status": row["status"],
+                    "status": STATUS_CODES.get(row["status"], row["status"]),
                 },
             )
 
