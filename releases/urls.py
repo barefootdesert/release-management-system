@@ -9,5 +9,6 @@ app_name = "releases"
 urlpatterns = [
     path("", views.releases_list, name="releases"),
     path("statistics/", views.statistics, name="statistics"),
+    path("ready/", views.ready_releases, name="ready"),
     path("<int:release_id>/", views.release_detail, name="release_detail"),
 ]

@@ -3,21 +3,82 @@
 {% block title %}Релизы{% endblock %}
 
 {% block content %}
-<h1>Релизы</h1>
-<p class="text-muted">
-  Активные релизы из SQLite.
-  Всего: {{ releases|length }}
-</p>
-<ul class="list-group">
-  {% for release in releases %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-      <a href="{% url 'releases:release_detail' release.id %}">
-        {{ release.product_name }} – {{ release.version }}
-      </a>
-      <span class="badge bg-secondary">{{ release.status }}</span>
-    </li>
-  {% empty %}
-    <li class="list-group-item">Релизы ещё не добавлены.</li>
-  {% endfor %}
-</ul>
+<header class="page-head">
+  <h1>Активные релизы</h1>
+  <p>
+    Всего:
+    <data value="{{ releases|length }}">{{ releases|length }}</data>
+    · JOIN <code>releases</code> и <code>products</code>
+  </p>
+</header>
+
+<table class="data-table">
+  <caption>Поля выводятся элементами, соответствующими типам SQLite</caption>
+  <thead>
+    <tr>
+      <th data-sql-type="INTEGER">id</th>
+      <th data-sql-type="TEXT">product.name</th>
+      <th data-sql-type="TEXT">version</th>
+      <th data-sql-type="TEXT">environment</th>
+      <th data-sql-type="TEXT">release_date</th>
+      <th data-sql-type="INTEGER">tests_passed</th>
+      <th data-sql-type="INTEGER">approvals</th>
+      <th data-sql-type="TEXT">status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for release in releases %}
+      <tr>
+        <td>
+          <a href="{% url 'releases:release_detail' release.id %}">
+            <data value="{{ release.id }}">{{ release.id }}</data>
+          </a>
+        </td>
+        <td>
+          <a href="{% url 'products:product_detail' release.product_id %}">
+            {{ release.product_name }}
+          </a>
+        </td>
+        <td>{{ release.version }}</td>
+        <td>{{ release.environment }}</td>
+        <td>
+          <time datetime="{{ release.release_date }}">
+            {{ release.release_date }}
+          </time>
+        </td>
+        <td>
+          <input
+            type="checkbox"
+            {% if release.tests_passed %}checked{% endif %}
+            disabled
+            aria-label="Тесты пройдены"
+          >
+        </td>
+        <td>
+          <meter
+            min="0"
+            max="{{ release.required_approvals|default:1 }}"
+            value="{{ release.approvals_count }}"
+          >
+            {{ release.approvals_count }} / {{ release.required_approvals }}
+          </meter>
+          <data value="{{ release.approvals_count }}">
+            {{ release.approvals_count }}
+          </data>
+          /
+          <data value="{{ release.required_approvals }}">
+            {{ release.required_approvals }}
+          </data>
+        </td>
+        <td>
+          {% include "releases/includes/release_status.html" %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="8">Релизы ещё не добавлены.</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

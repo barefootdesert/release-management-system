@@ -3,18 +3,23 @@
 {% block title %}Продукты{% endblock %}
 
 {% block content %}
-<h1>Продукты</h1>
-<p class="text-muted">
-  Всего: {{ products|length }} ·
-  <a href="{% url 'products:available' %}">Найти свободный продукт</a>
-</p>
-<div class="row g-3">
+<header class="page-head">
+  <h1>Продукты</h1>
+  <p>
+    Всего:
+    <data value="{{ products|length }}">{{ products|length }}</data>
+    · таблица <code>products</code>
+  </p>
+  <p>
+    <a href="{% url 'products:available' %}">Найти свободный продукт</a>
+  </p>
+</header>
+
+<section class="card-grid">
   {% for product in products %}
     {% include "products/includes/product_card.html" %}
   {% empty %}
-    <div class="col-12">
-      <div class="alert alert-secondary">Продукты ещё не добавлены.</div>
-    </div>
+    <p class="empty-state">Продукты ещё не добавлены.</p>
   {% endfor %}
-</div>
+</section>
 {% endblock %}

@@ -1,16 +1,21 @@
-<div class="col-md-6 col-lg-4">
-  <div class="card product-card h-100">
-    <div class="card-body">
-      <h5 class="card-title">
-        {{ product.name|default:"Без названия" }}
-      </h5>
-      <p class="card-text">
-        <span class="badge bg-secondary">#{{ product.id }}</span>
-      </p>
-      <a href="{% url 'products:product_detail' product.id %}"
-         class="btn btn-outline-primary btn-sm">
-        Открыть
-      </a>
-    </div>
-  </div>
-</div>
+<article class="entity-card" data-entity="product">
+  <p class="type-chip">INTEGER · id</p>
+  <p>
+    <data value="{{ product.id }}">#{{ product.id }}</data>
+  </p>
+  <h2 data-sql-type="TEXT">
+    {{ product.name|default:"Без названия" }}
+  </h2>
+  {% if product.releases_count or product.releases_count == 0 %}
+    <p class="type-chip">INTEGER · COUNT</p>
+    <p>
+      релизов:
+      <data value="{{ product.releases_count }}">
+        {{ product.releases_count }}
+      </data>
+    </p>
+  {% endif %}
+  <a class="button compact" href="{% url 'products:product_detail' product.id %}">
+    Открыть
+  </a>
+</article>

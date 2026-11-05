@@ -3,26 +3,55 @@
 {% block title %}Система управления релизами{% endblock %}
 
 {% block content %}
-<h1 class="display-4">Система управления релизами</h1>
-<p class="lead">
-  Веб-интерфейс на Django: шаблоны (ПР6) и выборки из SQLite (ПР7).
-</p>
-<p>
-  Классы ПР3 и JSON сохранены. Списки продуктов и релизов, поиск свободных
-  продуктов и статистика получают данные через SQL и модуль
-  <code>sqlite3</code>.
-</p>
-<p>Основные разделы:</p>
-<a href="{% url 'products:products' %}" class="btn btn-primary me-2">
-  Продукты
-</a>
-<a href="{% url 'products:available' %}" class="btn btn-outline-primary me-2">
-  Свободные
-</a>
-<a href="{% url 'releases:releases' %}" class="btn btn-secondary me-2">
-  Релизы
-</a>
-<a href="{% url 'releases:statistics' %}" class="btn btn-outline-secondary">
-  Статистика
-</a>
+<article class="hero">
+  <h1>Учёт продуктов и релизов</h1>
+  <p>
+    Данные читаются из SQLite через <code>sqlite3</code>.
+    Каждое поле выводится HTML-элементом своего типа:
+    идентификаторы — <code>&lt;data&gt;</code>, даты —
+    <code>&lt;time&gt;</code>, логические флаги — чекбоксы,
+    счётчики — <code>&lt;meter&gt;</code>.
+  </p>
+</article>
+
+<section class="summary" aria-label="Сводка по таблицам">
+  <article class="stat-tile" data-sql-type="INTEGER">
+    <p class="type-chip">INTEGER · COUNT</p>
+    <p class="stat-value">
+      <data value="{{ products_count }}">{{ products_count }}</data>
+    </p>
+    <h2>Продукты</h2>
+    <a href="{% url 'products:products' %}">Открыть список</a>
+  </article>
+  <article class="stat-tile" data-sql-type="INTEGER">
+    <p class="type-chip">INTEGER · COUNT</p>
+    <p class="stat-value">
+      <data value="{{ releases_count }}">{{ releases_count }}</data>
+    </p>
+    <h2>Активные релизы</h2>
+    <a href="{% url 'releases:releases' %}">Открыть список</a>
+  </article>
+  <article class="stat-tile" data-sql-type="INTEGER">
+    <p class="type-chip">INTEGER · COUNT</p>
+    <p class="stat-value">
+      <data value="{{ developers_count }}">{{ developers_count }}</data>
+    </p>
+    <h2>Разработчики</h2>
+    <p>таблица <code>developers</code></p>
+  </article>
+  <article class="stat-tile" data-sql-type="INTEGER">
+    <p class="type-chip">INTEGER · COUNT</p>
+    <p class="stat-value">
+      <data value="{{ tasks_count }}">{{ tasks_count }}</data>
+    </p>
+    <h2>Задачи</h2>
+    <p>таблица <code>tasks</code></p>
+  </article>
+</section>
+
+<nav class="quick-links">
+  <a class="button" href="{% url 'products:available' %}">Свободные продукты</a>
+  <a class="button secondary" href="{% url 'releases:ready' %}">Готовые релизы</a>
+  <a class="button secondary" href="{% url 'releases:statistics' %}">Статистика</a>
+</nav>
 {% endblock %}

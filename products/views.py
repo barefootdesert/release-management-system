@@ -1,21 +1,24 @@
-"""View-функции страниц продуктов (JSON + SQLite)."""
+"""View-функции страниц продуктов (данные из SQLite)."""
 
 from django.shortcuts import render
 
 from db.database import get_connection
-from models.products import find_product_by_id
-from storage import load_products, load_releases
 
 
 def products_list(request):
-    """Список продуктов из SQLite (ПР7)."""
+    """Список продуктов из SQLite (SELECT + LEFT JOIN + COUNT)."""
     connection = get_connection()
     try:
         products = connection.execute(
             """
-            SELECT id, name
-            FROM products
-            ORDER BY name
+            SELECT
+                p.id,
+                p.name,
+                COUNT(r.id) AS releases_count
+            FROM products AS p
+            LEFT JOIN releases AS r ON r.product_id = p.id
+            GROUP BY p.id, p.name
+            ORDER BY p.name
             """
         ).fetchall()
     finally:
@@ -28,15 +31,39 @@ def products_list(request):
 
 
 def product_detail(request, product_id):
-    """Карточка продукта; 404, если продукт не найден."""
-    products = load_products()
-    product = find_product_by_id(products, product_id)
-    related = []
-    if product is not None:
-        releases = load_releases(products)
-        related = [
-            item for item in releases if item.product.id == product.id
-        ]
+    """Карточка продукта из SQLite; 404, если запись не найдена."""
+    connection = get_connection()
+    try:
+        product = connection.execute(
+            """
+            SELECT id, name
+            FROM products
+            WHERE id = ?
+            """,
+            [product_id],
+        ).fetchone()
+        related = []
+        if product is not None:
+            related = connection.execute(
+                """
+                SELECT
+                    id,
+                    version,
+                    environment,
+                    status,
+                    release_date,
+                    tests_passed,
+                    approvals_count,
+                    required_approvals,
+                    is_hotfix
+                FROM releases
+                WHERE product_id = ?
+                ORDER BY release_date
+                """,
+                [product_id],
+            ).fetchall()
+    finally:
+        connection.close()
     status = 404 if product is None else 200
     return render(
         request,
@@ -47,7 +74,7 @@ def product_detail(request, product_id):
 
 
 def available_products(request):
-    """Продукты без активного релиза на выбранную дату (SQL)."""
+    """Продукты без активного релиза на выбранную дату (NOT IN)."""
     release_date = request.GET.get("date")
     products = []
     if release_date:

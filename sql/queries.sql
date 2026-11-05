@@ -63,7 +63,7 @@ SELECT
 FROM products AS p
 LEFT JOIN releases AS r ON r.product_id = p.id
 GROUP BY p.id, p.name
-HAVING COUNT(r.id) > ?
+HAVING COUNT(r.id) >= ?
 ORDER BY releases_count DESC;
 
 -- 9. Список разработчиков

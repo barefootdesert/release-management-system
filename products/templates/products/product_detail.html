@@ -6,35 +6,71 @@
 
 {% block content %}
 {% if product %}
-  <div class="card product-card mb-3">
-    <div class="card-body">
-      <h5 class="card-title">{{ product.name|default:"Без названия" }}</h5>
-      <p class="card-text"><strong>ID:</strong> {{ product.id }}</p>
-      <a href="{% url 'products:products' %}"
-         class="btn btn-outline-secondary">
+  <article class="record" data-entity="product">
+    <h1 data-sql-type="TEXT">{{ product.name|default:"Без названия" }}</h1>
+    <dl class="typed-fields">
+      <div data-sql-type="INTEGER">
+        <dt>id</dt>
+        <dd><data value="{{ product.id }}">{{ product.id }}</data></dd>
+      </div>
+      <div data-sql-type="TEXT">
+        <dt>name</dt>
+        <dd>{{ product.name|default:"Без названия" }}</dd>
+      </div>
+    </dl>
+    <p>
+      <a class="button secondary" href="{% url 'products:products' %}">
         ← к списку продуктов
       </a>
-    </div>
-  </div>
+    </p>
+  </article>
 
-  <h2 class="h4">Релизы продукта</h2>
-  <ul class="list-group">
-    {% for item in related_releases %}
-      <li class="list-group-item d-flex justify-content-between">
-        <a href="{% url 'releases:release_detail' item.id %}">
-          {{ item.version }} ({{ item.environment }})
-        </a>
-        {% include "releases/includes/release_status.html" with release=item %}
-      </li>
-    {% empty %}
-      <li class="list-group-item">Релизов пока нет.</li>
-    {% endfor %}
-  </ul>
+  <section>
+    <h2>Релизы продукта</h2>
+    <table class="data-table">
+      <caption>JOIN не нужен: выборка из <code>releases</code> по product_id</caption>
+      <thead>
+        <tr>
+          <th data-sql-type="INTEGER">id</th>
+          <th data-sql-type="TEXT">version</th>
+          <th data-sql-type="TEXT">environment</th>
+          <th data-sql-type="TEXT">release_date</th>
+          <th data-sql-type="TEXT">status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in related_releases %}
+          <tr>
+            <td>
+              <a href="{% url 'releases:release_detail' item.id %}">
+                <data value="{{ item.id }}">{{ item.id }}</data>
+              </a>
+            </td>
+            <td>{{ item.version }}</td>
+            <td>{{ item.environment }}</td>
+            <td>
+              <time datetime="{{ item.release_date }}">
+                {{ item.release_date }}
+              </time>
+            </td>
+            <td>
+              {% include "releases/includes/release_status.html" with release=item %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5">Релизов пока нет.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
 {% else %}
-  <h1 class="text-danger">Продукт не найден</h1>
-  <a href="{% url 'products:products' %}"
-     class="btn btn-outline-secondary">
-    ← к списку продуктов
-  </a>
+  <article class="empty-state">
+    <h1>Продукт не найден</h1>
+    <a class="button secondary" href="{% url 'products:products' %}">
+      ← к списку продуктов
+    </a>
+  </article>
 {% endif %}
 {% endblock %}

@@ -6,55 +6,94 @@
 
 {% block content %}
 {% if release %}
-  <div class="card product-card">
-    <div class="card-body">
-      <h5 class="card-title">
-        Релиз №{{ release.id }}:
-        {{ release.product.name }} {{ release.version }}
-      </h5>
-      <p class="card-text">
-        <strong>Продукт:</strong>
-        <a href="{% url 'products:product_detail' release.product.id %}">
-          {{ release.product.name }}
-        </a>
-      </p>
-      <p class="card-text">
-        <strong>Окружение:</strong> {{ release.environment }}
-      </p>
-      <p class="card-text">
-        <strong>Дата:</strong> {{ release.release_date|date:"d.m.Y" }}
-        ({{ release.describe_deadline }})
-      </p>
-      <p class="card-text">
-        <strong>Тесты пройдены:</strong>
-        {% if release.tests_passed %}да{% else %}нет{% endif %}
-      </p>
-      <p class="card-text">
-        <strong>Согласования:</strong>
-        {{ release.approvals_count }} / {{ release.required_approvals }}
-      </p>
-      <p class="card-text">
-        <strong>Hotfix:</strong>
-        {% if release.is_hotfix %}да{% else %}нет{% endif %}
-      </p>
-      <p class="card-text">
-        <strong>Тип версии:</strong> {{ release.classify }}
-      </p>
-      <p class="card-text">
-        Статус:
-        {% include "releases/includes/release_status.html" %}
-      </p>
-      <a href="{% url 'releases:releases' %}"
-         class="btn btn-outline-secondary">
+  <article class="record" data-entity="release">
+    <h1>
+      Релиз
+      <data value="{{ release.id }}">№{{ release.id }}</data>
+    </h1>
+    <dl class="typed-fields">
+      <div data-sql-type="INTEGER">
+        <dt>id</dt>
+        <dd><data value="{{ release.id }}">{{ release.id }}</data></dd>
+      </div>
+      <div data-sql-type="TEXT">
+        <dt>product.name</dt>
+        <dd>
+          <a href="{% url 'products:product_detail' release.product_id %}">
+            {{ release.product_name }}
+          </a>
+        </dd>
+      </div>
+      <div data-sql-type="TEXT">
+        <dt>version</dt>
+        <dd>{{ release.version }}</dd>
+      </div>
+      <div data-sql-type="TEXT">
+        <dt>environment</dt>
+        <dd>{{ release.environment }}</dd>
+      </div>
+      <div data-sql-type="TEXT">
+        <dt>release_date</dt>
+        <dd>
+          <time datetime="{{ release.release_date }}">
+            {{ release.release_date }}
+          </time>
+        </dd>
+      </div>
+      <div data-sql-type="INTEGER">
+        <dt>tests_passed</dt>
+        <dd>
+          <input
+            type="checkbox"
+            {% if release.tests_passed %}checked{% endif %}
+            disabled
+            aria-label="Тесты пройдены"
+          >
+          {% if release.tests_passed %}да{% else %}нет{% endif %}
+        </dd>
+      </div>
+      <div data-sql-type="INTEGER">
+        <dt>is_hotfix</dt>
+        <dd>
+          <input
+            type="checkbox"
+            {% if release.is_hotfix %}checked{% endif %}
+            disabled
+            aria-label="Hotfix"
+          >
+          {% if release.is_hotfix %}да{% else %}нет{% endif %}
+        </dd>
+      </div>
+      <div data-sql-type="INTEGER">
+        <dt>approvals_count / required_approvals</dt>
+        <dd>
+          <meter
+            min="0"
+            max="{{ release.required_approvals|default:1 }}"
+            value="{{ release.approvals_count }}"
+          >
+            {{ release.approvals_count }} / {{ release.required_approvals }}
+          </meter>
+          {{ release.approvals_count }} / {{ release.required_approvals }}
+        </dd>
+      </div>
+      <div data-sql-type="TEXT">
+        <dt>status</dt>
+        <dd>{% include "releases/includes/release_status.html" %}</dd>
+      </div>
+    </dl>
+    <p>
+      <a class="button secondary" href="{% url 'releases:releases' %}">
         ← к списку релизов
       </a>
-    </div>
-  </div>
+    </p>
+  </article>
 {% else %}
-  <h1 class="text-danger">Релиз не найден</h1>
-  <a href="{% url 'releases:releases' %}"
-     class="btn btn-outline-secondary">
-    ← к списку релизов
-  </a>
+  <article class="empty-state">
+    <h1>Релиз не найден</h1>
+    <a class="button secondary" href="{% url 'releases:releases' %}">
+      ← к списку релизов
+    </a>
+  </article>
 {% endif %}
 {% endblock %}
